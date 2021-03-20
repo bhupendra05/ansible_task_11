@@ -1,0 +1,61 @@
+- name : "provide Ip Address"
+  vars_prompt:
+          - name : n_ip
+            prompt : "Enter The Master Ip"
+            private: no
+  hosts: namenode 
+  tasks:
+  - name : "Copying the hadoop file in the namenode"
+    copy :
+      src : "/root/ansible_11_ws/{{ item }}"
+      dest : "/"
+    loop :
+    - "hadoop-1.2.1-1.x86_64.rpm"
+    - "jdk-8u171-linux-x64.rpm"
+    register : x
+  - name : "installing jdk and hadoop in the namenode"  
+    command :  "rpm -ivh /{{ item }}"
+    loop :
+      - "jdk-8u171-linux-x64.rpm"
+      - "hadoop-1.2.1-1.x86_64.rpm --force"
+    when : x.changed == True
+
+  - name : "configuring the hdfs-site.xml"
+    blockinfile :
+            path: /etc/hadoop/hdfs-site.xml
+            insertafter: "<configuration>"
+            block: |
+               <property>
+               <name>dfs.name.dir</name>
+               <value>/nn</value>
+               </property>
+
+  - name : 
+    blockinfile :
+            path : /etc/hadoop/core-site.xml
+            insertafter: "<configuration>"
+            block : |
+               <property>
+               <name>fs.default.name</name>
+               <value>hdfs://{{ n_ip }}:9001</value>
+               </property>
+
+  - name : "creating the directory for name node"
+    file :
+      path : /nn
+      state : directory
+
+  - name : "formatting the namenode"
+    shell :  "echo Y | hadoop namenode -format"
+    register : format
+  - name : "Stopping Firewall"
+    shell : "systemctl stop firewalld"
+    register : firewalld
+  - name : "start the namenode"
+    shell : "hadoop-daemon.sh start namenode"
+    register : hadoop
+  - name : "checking service status" 
+    shell : "jps"
+    register : jps
+  - debug : 
+     var : n_ip

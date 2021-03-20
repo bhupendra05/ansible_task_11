@@ -1,0 +1,26 @@
+- hosts : aws
+  tasks :
+    - name : install httpd
+      package :
+              name : httpd
+              state : present 
+      register : s
+    - name : copy the file
+      template :
+              src : /root/ansible_11_ws/index.html
+              dest : /var/www/html
+      notify : "handlers for restart httpd service"
+    - name : start the service
+      service : 
+              name : httpd
+              state : restarted
+              enabled : yes
+      when : s.changed == true
+  handlers : 
+    - name : "handlers for restart httpd service"
+      service : 
+              name : httpd
+              state : restarted
+
+           
+

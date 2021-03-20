@@ -1,0 +1,12 @@
+- name : "provide ip address"
+  vars_prompt:
+        - name: n_ip
+          prompt: "Enter Master IP Address"
+          private: no
+  hosts: 192.168.1.6
+  tasks:
+  - copy : 
+    
+  - debug:
+      var: n_ip
+          
